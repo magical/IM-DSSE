@@ -4,8 +4,13 @@ THREAD_PRECOMPUTE_AESKEY::THREAD_PRECOMPUTE_AESKEY()
 {
 }
 
-
-THREAD_PRECOMPUTE_AESKEY::THREAD_PRECOMPUTE_AESKEY(unsigned char* aes_keys, TYPE_INDEX idx, int dim, bool isIncremental, TYPE_COUNTER* block_counter_arr,unsigned char* row_keys, MasterKey* masterKey)
+THREAD_PRECOMPUTE_AESKEY::THREAD_PRECOMPUTE_AESKEY(unsigned char* aes_keys,
+                                                   TYPE_INDEX idx,
+                                                   int dim,
+                                                   bool isIncremental,
+                                                   TYPE_COUNTER* block_counter_arr,
+                                                   unsigned char* row_keys,
+                                                   MasterKey* masterKey)
 {
     this->idx = idx;
     this->dim = dim;
@@ -15,8 +20,6 @@ THREAD_PRECOMPUTE_AESKEY::THREAD_PRECOMPUTE_AESKEY(unsigned char* aes_keys, TYPE
     this->aes_keys = aes_keys;
     this->isIncremental = isIncremental;
 }
-
-
 
 THREAD_PRECOMPUTE_AESKEY::~THREAD_PRECOMPUTE_AESKEY()
 {
