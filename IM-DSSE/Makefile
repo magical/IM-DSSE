@@ -50,7 +50,7 @@ LibPath                := $(LibraryPathSwitch).
 AR       := /usr/bin/ar rcu
 CXX      := /usr/bin/g++
 CC       := /usr/bin/gcc
-CXXFLAGS :=  -std=c++11  -libstdc++  -ggdb3 -c  -fmessage-length=0 -g -O0 -Wall -fPIC -MMD  -MP   -MF -lzmq  -lmsgpack  -lboost_iostreams
+CXXFLAGS :=  -std=c++11  -libstdc++  -ggdb3 -c  -fmessage-length=0 -g -O0 -Wall -fPIC -MMD  -MP   -lzmq  -lmsgpack  -lboost_iostreams
  $(Preprocessors)
 CFLAGS   :=  -g -O0 -Wall $(Preprocessors)
 ASFLAGS  := 
