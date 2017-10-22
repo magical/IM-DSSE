@@ -180,6 +180,7 @@ int Server_DSSE::loadState()
                 FILENAME_BLOCK_COUNTER_ARRAY, gcsDataStructureFilepath, this->block_counter_arr, NUM_BLOCKS);
         printf("OK!\n");
     }
+    return 0;
 }
 
 /**
@@ -215,6 +216,7 @@ int Server_DSSE::saveState()
                 FILENAME_BLOCK_COUNTER_ARRAY, gcsDataStructureFilepath, this->block_counter_arr, NUM_BLOCKS);
         printf("OK!\n");
     }
+    return 0;
 }
 /**
  * Function Name: updateBlock_data
@@ -651,6 +653,7 @@ int Server_DSSE::loadData_from_file(int dim, TYPE_INDEX idx)
         }
     }
     delete dsse;
+    return 0;
 }
 
 /**
@@ -684,4 +687,5 @@ int Server_DSSE::saveData_to_file(int dim, TYPE_INDEX idx)
         }
     }
     delete dsse;
+    return 0;
 }

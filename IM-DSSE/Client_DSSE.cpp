@@ -249,7 +249,6 @@ int Client_DSSE::loadState()
  */
 int Client_DSSE::sendFile(string filename, string path, int SENDING_TYPE)
 {
-
     int n;
 
     FILE* finput = NULL;
@@ -749,8 +748,6 @@ int Client_DSSE::sendBlock_data(TYPE_INDEX block_index, MatrixType* I_prime)
     unsigned char buffer_in[SOCKET_BUFFER_SIZE] = {'\0'};
     unsigned char buffer_out[SOCKET_BUFFER_SIZE] = {'\0'};
     string filename_temp_with_path;
-    int n;
-    off_t offset;
 
     zmq::context_t context(1);
     zmq::socket_t socket(context, ZMQ_REQ);
@@ -1112,7 +1109,6 @@ int Client_DSSE::requestSearch_data(TYPE_INDEX row_index, MatrixType* I_prime)
 
     TYPE_INDEX serialized_buffer_len = MATRIX_COL_SIZE;
 
-    TYPE_INDEX row, ii, state_col, state_bit_position;
     try
     {
 
