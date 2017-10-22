@@ -12,16 +12,23 @@
 #include <iostream>
 using namespace zmq;
 
+#ifdef DECRYPT_AT_CLIENT_SIDE
+static const bool decrypt_at_client_side = true;
+#else
+static const bool decrypt_at_client_side = false;
+#endif
+
 Server_DSSE::Server_DSSE()
 {
     TYPE_INDEX i;
 
-/* Allocate memory for data structure (matrix) */
-#if !defined(DECRYPT_AT_CLIENT_SIDE)
-    block_counter_arr = new TYPE_COUNTER[NUM_BLOCKS];
-    for(int i = 0; i < NUM_BLOCKS; i++)
-        block_counter_arr[i] = 1;
-#endif
+    /* Allocate memory for data structure (matrix) */
+    if(!decrypt_at_client_side)
+    {
+        block_counter_arr = new TYPE_COUNTER[NUM_BLOCKS];
+        for(int i = 0; i < NUM_BLOCKS; i++)
+            block_counter_arr[i] = 1;
+    }
 
 #if !defined(DISK_STORAGE_MODE)
     this->I = new MatrixType* [MATRIX_ROW_SIZE];
@@ -29,15 +36,17 @@ Server_DSSE::Server_DSSE()
     {
         this->I[i] = new MatrixType[MATRIX_COL_SIZE];
     }
-#if !defined(DECRYPT_AT_CLIENT_SIDE)
-    /* Allocate memory for state matrix */
-    this->block_state_mat = new MatrixType* [MATRIX_ROW_SIZE];
-    for(i = 0; i < MATRIX_ROW_SIZE; i++)
+
+    if(!decrypt_at_client_side)
     {
-        this->block_state_mat[i] = new MatrixType[NUM_BLOCKS / BYTE_SIZE];
-        memset(this->block_state_mat[i], ZERO_VALUE, NUM_BLOCKS / BYTE_SIZE);
+        /* Allocate memory for state matrix */
+        this->block_state_mat = new MatrixType* [MATRIX_ROW_SIZE];
+        for(i = 0; i < MATRIX_ROW_SIZE; i++)
+        {
+            this->block_state_mat[i] = new MatrixType[NUM_BLOCKS / BYTE_SIZE];
+            memset(this->block_state_mat[i], ZERO_VALUE, NUM_BLOCKS / BYTE_SIZE);
+        }
     }
-#endif
 
 #else
     this->I_search = new MatrixType* [1];
@@ -49,18 +58,19 @@ Server_DSSE::Server_DSSE()
         this->I_update[i] = new MatrixType[c];
         memset(this->I_update[i], 0, c);
     }
-#if !defined(DECRYPT_AT_CLIENT_SIDE)
-    this->block_state_mat_search = new MatrixType* [1];
-    this->block_state_mat_search[0] = new MatrixType[NUM_BLOCKS];
-    memset(this->block_state_mat_search[0], 0, NUM_BLOCKS);
-
-    this->block_state_mat_update = new MatrixType* [BLOCK_STATE_ROW_SIZE];
-    for(TYPE_INDEX i = 0; i < BLOCK_STATE_ROW_SIZE; i++)
+    if(!decrypt_at_client_side)
     {
-        this->block_state_mat_update[i] = new MatrixType[1];
-        memset(this->block_state_mat_update[i], 0, 1);
+        this->block_state_mat_search = new MatrixType* [1];
+        this->block_state_mat_search[0] = new MatrixType[NUM_BLOCKS];
+        memset(this->block_state_mat_search[0], 0, NUM_BLOCKS);
+
+        this->block_state_mat_update = new MatrixType* [BLOCK_STATE_ROW_SIZE];
+        for(TYPE_INDEX i = 0; i < BLOCK_STATE_ROW_SIZE; i++)
+        {
+            this->block_state_mat_update[i] = new MatrixType[1];
+            memset(this->block_state_mat_update[i], 0, 1);
+        }
     }
-#endif
 #endif
 }
 
@@ -154,20 +164,22 @@ int Server_DSSE::loadState()
     dsse->loadEncrypted_matrix_from_files(this->I);
     printf("OK!\n");
 
-#if !defined(DECRYPT_AT_CLIENT_SIDE)
-    printf("   Loading block state matrix...");
-    dsse->loadBlock_state_matrix_from_file(this->block_state_mat);
-    printf("OK!\n");
-#endif
+    if(!decrypt_at_client_side)
+    {
+        printf("   Loading block state matrix...");
+        dsse->loadBlock_state_matrix_from_file(this->block_state_mat);
+        printf("OK!\n");
+    }
     delete dsse;
+#endif
 
-#endif
-#if !defined(DECRYPT_AT_CLIENT_SIDE)
-    printf("   Loading block counter array...");
-    Miscellaneous::read_array_from_file(
-            FILENAME_BLOCK_COUNTER_ARRAY, gcsDataStructureFilepath, this->block_counter_arr, NUM_BLOCKS);
-    printf("OK!\n");
-#endif
+    if(!decrypt_at_client_side)
+    {
+        printf("   Loading block counter array...");
+        Miscellaneous::read_array_from_file(
+                FILENAME_BLOCK_COUNTER_ARRAY, gcsDataStructureFilepath, this->block_counter_arr, NUM_BLOCKS);
+        printf("OK!\n");
+    }
 }
 
 /**
@@ -186,21 +198,23 @@ int Server_DSSE::saveState()
     dsse->saveEncrypted_matrix_to_files(this->I);
     printf("OK!\n");
 
-#if !defined(DECRYPT_AT_CLIENT_SIDE)
-    printf("   Saving block state matrix...");
-    dsse->saveBlock_state_matrix_to_file(this->block_state_mat);
-    printf("OK!\n");
-#endif
+    if(!decrypt_at_client_side)
+    {
+        printf("   Saving block state matrix...");
+        dsse->saveBlock_state_matrix_to_file(this->block_state_mat);
+        printf("OK!\n");
+    }
 
     delete dsse;
 #endif
 
-#if !defined(DECRYPT_AT_CLIENT_SIDE)
-    printf("   Saving block counter array...");
-    Miscellaneous::write_array_to_file(
-            FILENAME_BLOCK_COUNTER_ARRAY, gcsDataStructureFilepath, this->block_counter_arr, NUM_BLOCKS);
-    printf("OK!\n");
-#endif
+    if(!decrypt_at_client_side)
+    {
+        printf("   Saving block counter array...");
+        Miscellaneous::write_array_to_file(
+                FILENAME_BLOCK_COUNTER_ARRAY, gcsDataStructureFilepath, this->block_counter_arr, NUM_BLOCKS);
+        printf("OK!\n");
+    }
 }
 /**
  * Function Name: updateBlock_data
@@ -260,15 +274,16 @@ int Server_DSSE::updateBlock_data(zmq::socket_t& socket)
         idx = block_index % (BYTE_SIZE / ENCRYPT_BLOCK_SIZE);
     dsse->update(serialized_buffer, idx, this->I_update, NULL, NULL);
 
-#if !defined(DECRYPT_AT_CLIENT_SIDE)
-    this->block_counter_arr[block_index] += 1;
-
-    int bit = (block_index) % BYTE_SIZE;
-    for(TYPE_INDEX row = 0; row < MATRIX_ROW_SIZE; row++)
+    if(!decrypt_at_client_side)
     {
-        BIT_SET(&this->block_state_mat_update[row][0].byte_data, bit);
+        this->block_counter_arr[block_index] += 1;
+
+        int bit = (block_index) % BYTE_SIZE;
+        for(TYPE_INDEX row = 0; row < MATRIX_ROW_SIZE; row++)
+        {
+            BIT_SET(&this->block_state_mat_update[row][0].byte_data, bit);
+        }
     }
-#endif
 
     saveData_to_file(COL, block_index);
 
@@ -306,17 +321,20 @@ int Server_DSSE::getBlock_data(zmq::socket_t& socket, int dim)
     TYPE_INDEX serialized_buffer_len;
     auto start = time_now;
     auto end = time_now;
-#if !defined(DECRYPT_AT_CLIENT_SIDE)
-    if(dim == COL)
-        serialized_buffer_len = (MATRIX_ROW_SIZE * ENCRYPT_BLOCK_SIZE) / BYTE_SIZE + (MATRIX_ROW_SIZE / BYTE_SIZE);
+    if(!decrypt_at_client_side)
+    {
+        if(dim == COL)
+            serialized_buffer_len = (MATRIX_ROW_SIZE * ENCRYPT_BLOCK_SIZE) / BYTE_SIZE + (MATRIX_ROW_SIZE / BYTE_SIZE);
+        else
+            serialized_buffer_len = MATRIX_COL_SIZE;
+    }
     else
-        serialized_buffer_len = MATRIX_COL_SIZE;
-#else
-    if(dim == COL)
-        serialized_buffer_len = (MATRIX_ROW_SIZE * ENCRYPT_BLOCK_SIZE) / BYTE_SIZE;
-    else
-        serialized_buffer_len = MATRIX_COL_SIZE;
-#endif
+    {
+        if(dim == COL)
+            serialized_buffer_len = (MATRIX_ROW_SIZE * ENCRYPT_BLOCK_SIZE) / BYTE_SIZE;
+        else
+            serialized_buffer_len = MATRIX_COL_SIZE;
+    }
     MatrixType* serialized_buffer = new MatrixType[serialized_buffer_len]; // consist of data and block state
     memset(serialized_buffer, 0, serialized_buffer_len);
 
@@ -355,29 +373,30 @@ int Server_DSSE::getBlock_data(zmq::socket_t& socket, int dim)
     start = time_now;
     if(dim == COL)
     {
-#if !defined(DECRYPT_AT_CLIENT_SIDE)
-        TYPE_INDEX row, ii, state_col, state_bit_position;
-        for(row = 0, ii = (MATRIX_ROW_SIZE * ENCRYPT_BLOCK_SIZE); row < MATRIX_ROW_SIZE; row++, ii++)
+        if(!decrypt_at_client_side)
         {
-            state_col = ii / BYTE_SIZE;
-            state_bit_position = ii % BYTE_SIZE;
+            TYPE_INDEX row, ii, state_col, state_bit_position;
+            for(row = 0, ii = (MATRIX_ROW_SIZE * ENCRYPT_BLOCK_SIZE); row < MATRIX_ROW_SIZE; row++, ii++)
+            {
+                state_col = ii / BYTE_SIZE;
+                state_bit_position = ii % BYTE_SIZE;
 #if !defined(DISK_STORAGE_MODE)
-            TYPE_INDEX col = block_index / BYTE_SIZE;
-            int bit = block_index % BYTE_SIZE;
-            if(BIT_CHECK(&this->block_state_mat[row][col].byte_data, bit))
-                BIT_SET(&serialized_buffer[state_col].byte_data, state_bit_position);
-            else
-                BIT_CLEAR(&serialized_buffer[state_col].byte_data, state_bit_position);
+                TYPE_INDEX col = block_index / BYTE_SIZE;
+                int bit = block_index % BYTE_SIZE;
+                if(BIT_CHECK(&this->block_state_mat[row][col].byte_data, bit))
+                    BIT_SET(&serialized_buffer[state_col].byte_data, state_bit_position);
+                else
+                    BIT_CLEAR(&serialized_buffer[state_col].byte_data, state_bit_position);
 #else
-            int bit = (block_index) % BYTE_SIZE;
+                int bit = (block_index) % BYTE_SIZE;
 
-            if(BIT_CHECK(&this->block_state_mat_update[row][0].byte_data, bit))
-                BIT_SET(&serialized_buffer[state_col].byte_data, state_bit_position);
-            else
-                BIT_CLEAR(&serialized_buffer[state_col].byte_data, state_bit_position);
+                if(BIT_CHECK(&this->block_state_mat_update[row][0].byte_data, bit))
+                    BIT_SET(&serialized_buffer[state_col].byte_data, state_bit_position);
+                else
+                    BIT_CLEAR(&serialized_buffer[state_col].byte_data, state_bit_position);
 #endif
+            }
         }
-#endif
     }
     end = time_now;
     cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() << " ns" << endl;
@@ -618,16 +637,18 @@ int Server_DSSE::loadData_from_file(int dim, TYPE_INDEX idx)
     if(dim == ROW)
     {
         dsse->loadEncrypted_matrix_from_files(this->I_search, dim, idx);
-#if !defined(DECRYPT_AT_CLIENT_SIDE)
-        dsse->loadBlock_state_matrix_from_file(this->block_state_mat_search, dim, idx);
-#endif
+        if(!decrypt_at_client_side)
+        {
+            dsse->loadBlock_state_matrix_from_file(this->block_state_mat_search, dim, idx);
+        }
     }
     else
     {
         dsse->loadEncrypted_matrix_from_files(this->I_update, dim, (idx));
-#if !defined(DECRYPT_AT_CLIENT_SIDE)
-        dsse->loadBlock_state_matrix_from_file(this->block_state_mat_update, dim, (idx));
-#endif
+        if(!decrypt_at_client_side)
+        {
+            dsse->loadBlock_state_matrix_from_file(this->block_state_mat_update, dim, (idx));
+        }
     }
     delete dsse;
 }
@@ -649,16 +670,18 @@ int Server_DSSE::saveData_to_file(int dim, TYPE_INDEX idx)
     {
         dsse->saveEncrypted_matrix_to_files(this->I_search, dim, idx);
 
-#if !defined(DECRYPT_AT_CLIENT_SIDE)
-        dsse->saveBlock_state_matrix_to_file(this->block_state_mat_search, dim, idx);
-#endif
+        if(!decrypt_at_client_side)
+        {
+            dsse->saveBlock_state_matrix_to_file(this->block_state_mat_search, dim, idx);
+        }
     }
     else
     {
         dsse->saveEncrypted_matrix_to_files(this->I_update, COL, idx);
-#if !defined(DECRYPT_AT_CLIENT_SIDE)
-        dsse->saveBlock_state_matrix_to_file(this->block_state_mat_update, COL, idx);
-#endif
+        if(!decrypt_at_client_side)
+        {
+            dsse->saveBlock_state_matrix_to_file(this->block_state_mat_update, COL, idx);
+        }
     }
     delete dsse;
 }
