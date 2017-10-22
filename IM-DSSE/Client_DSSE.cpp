@@ -81,11 +81,9 @@ Client_DSSE::~Client_DSSE()
  */
 int Client_DSSE::genMaster_key()
 {
-    DSSE_KeyGen* dsse_key = new DSSE_KeyGen();
+    DSSE_KeyGen dsse_key;
     this->masterKey = new MasterKey();
-    dsse_key->genMaster_key(this->masterKey, &prng);
-
-    delete dsse_key;
+    dsse_key.genMaster_key(this->masterKey, &prng);
     return 0;
 }
 /**
@@ -354,15 +352,11 @@ int Client_DSSE::sendFile(string filename, string path, int SENDING_TYPE)
 int Client_DSSE::createEncrypted_data_structure()
 {
     DSSE* dsse = new DSSE();
-    DSSE_KeyGen* dsse_keygen = NULL;
+    DSSE_KeyGen dsse_keygen;
     vector<string> files_input;
 
     Miscellaneous misc;
 
-    if(decrypt_at_client_side)
-    {
-        dsse_keygen = new DSSE_KeyGen();
-    }
     try
     {
 
@@ -401,7 +395,7 @@ int Client_DSSE::createEncrypted_data_structure()
         {
             this->row_keys = new unsigned char[BLOCK_CIPHER_SIZE * MATRIX_ROW_SIZE];
             memset(this->row_keys, 0, BLOCK_CIPHER_SIZE * MATRIX_ROW_SIZE);
-            dsse_keygen->pregenerateRow_keys(this->keyword_counter_arr, row_keys, this->masterKey);
+            dsse_keygen.pregenerateRow_keys(this->keyword_counter_arr, row_keys, this->masterKey);
         }
 
         printf("\n\n3. Saving state to disk...\n");
@@ -418,10 +412,6 @@ int Client_DSSE::createEncrypted_data_structure()
     }
     ready = true;
 
-    if(decrypt_at_client_side)
-    {
-        delete dsse_keygen;
-    }
     files_input.clear();
     delete dsse;
     return 0;
@@ -516,7 +506,7 @@ int Client_DSSE::sendEncryptedIndex()
 int Client_DSSE::searchKeyword(string keyword, TYPE_COUNTER& res)
 {
     DSSE* dsse = new DSSE();
-    DSSE_KeyGen* dsse_keygen = NULL;
+    DSSE_KeyGen dsse_keygen;
     SearchToken tau;
     auto start = time_now;
     auto end = time_now;
@@ -536,10 +526,6 @@ int Client_DSSE::searchKeyword(string keyword, TYPE_COUNTER& res)
 
 #endif
 
-    if(decrypt_at_client_side)
-    {
-        dsse_keygen = new DSSE_KeyGen();
-    }
     try
     {
         if(ready == false)
@@ -645,7 +631,7 @@ int Client_DSSE::searchKeyword(string keyword, TYPE_COUNTER& res)
 
             printf("2. Decrypting...");
             start = time_now;
-            dsse_keygen->enc_dec_preAESKey(search_res, search_data, aes_keys, MATRIX_COL_SIZE);
+            dsse_keygen.enc_dec_preAESKey(search_res, search_data, aes_keys, MATRIX_COL_SIZE);
             end = time_now;
             cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() << " ns" << endl;
 
@@ -678,10 +664,6 @@ int Client_DSSE::searchKeyword(string keyword, TYPE_COUNTER& res)
 #if defined(SEND_SEARCH_FILE_INDEX)
         filename_search_result.clear();
 #endif
-    }
-    else
-    {
-        delete dsse_keygen;
     }
 
     return 0;
@@ -827,7 +809,6 @@ int Client_DSSE::addFile(string filename, string path)
 {
     Miscellaneous misc;
     DSSE* dsse = new DSSE();
-    DSSE_KeyGen* dsse_keygen = NULL;
     TYPE_INDEX block_index;
 
     TYPE_KEYWORD_DICTIONARY extracted_keywords;
@@ -836,11 +817,6 @@ int Client_DSSE::addFile(string filename, string path)
 
     stringstream new_filename_with_path;
     string s;
-
-    if(decrypt_at_client_side)
-    {
-        DSSE_KeyGen* dsse_keygen = new DSSE_KeyGen();
-    }
 
     auto start = time_now;
     auto end = time_now;
@@ -968,11 +944,6 @@ int Client_DSSE::addFile(string filename, string path)
     extracted_keywords.clear();
 
     delete dsse;
-
-    if(decrypt_at_client_side)
-    {
-        delete dsse_keygen;
-    }
     return 0;
 }
 
@@ -995,7 +966,6 @@ int Client_DSSE::delFile(string filename, string path)
 {
     Miscellaneous misc;
     DSSE* dsse = new DSSE();
-    DSSE_KeyGen* dsse_keygen = NULL;
 
     TYPE_INDEX block_index;
     TYPE_INDEX file_index;
@@ -1008,11 +978,6 @@ int Client_DSSE::delFile(string filename, string path)
     string encrypted_filename = "";
     zmq::context_t context(1);
     zmq::socket_t socket(context, ZMQ_REQ);
-
-    if(decrypt_at_client_side)
-    {
-        dsse_keygen = new DSSE_KeyGen();
-    }
 
     auto start = time_now;
     auto end = time_now;
@@ -1132,10 +1097,6 @@ int Client_DSSE::delFile(string filename, string path)
     memset(buffer_out, 0, SOCKET_BUFFER_SIZE);
     encrypted_filename.clear();
 
-    if(decrypt_at_client_side)
-    {
-        delete dsse_keygen;
-    }
     delete dsse;
     return 0;
 }
@@ -1191,10 +1152,9 @@ void* Client_DSSE::thread_precomputeAesKey_func(void* param)
     printf("\n   [Thread] Generating AES-CTR decryption key...");
     auto start = time_now;
     THREAD_PRECOMPUTE_AESKEY* opt = (THREAD_PRECOMPUTE_AESKEY*)param;
-    DSSE_KeyGen* dsse_keygen = new DSSE_KeyGen();
-    dsse_keygen->precomputeAES_CTR_keys(
+    DSSE_KeyGen dsse_keygen;
+    dsse_keygen.precomputeAES_CTR_keys(
             opt->aes_keys, opt->idx, opt->dim, opt->isIncremental, opt->block_counter_arr, opt->row_keys, opt->masterKey);
-    delete dsse_keygen;
     auto end = time_now;
     cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() << " ns" << endl;
     pthread_exit((void*)opt);
