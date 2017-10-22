@@ -127,8 +127,8 @@ int Client_DSSE::saveState()
     printf("OK!\n");
 
     printf("   Writing total keywords and files...");
-    TYPE_COUNTER total_keywords_files[2] = {this->T_W.load_factor() * T_W.bucket_count(),
-                                            this->T_F.load_factor() * T_F.bucket_count()};
+    TYPE_COUNTER total_keywords_files[2] = {(TYPE_COUNTER)(this->T_W.load_factor() * T_W.bucket_count()),
+                                            (TYPE_COUNTER)(this->T_F.load_factor() * T_F.bucket_count())};
     Miscellaneous::write_array_to_file(FILENAME_TOTAL_KEYWORDS_FILES, gcsDataStructureFilepath, total_keywords_files, 2);
     printf("OK!\n");
 
