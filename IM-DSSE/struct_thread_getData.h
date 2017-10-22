@@ -2,7 +2,7 @@
 #define STRUCT_THREAD_GETDATA_H
 #include "struct_MatrixType.h"
 #include "config.h"
-typedef struct THREAD_GETDATA
+struct THREAD_GETDATA
 {
     MatrixType* data;
     TYPE_INDEX idx;

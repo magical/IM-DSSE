@@ -131,6 +131,8 @@ int Client_DSSE::saveState()
                                             this->T_F.load_factor() * T_F.bucket_count()};
     Miscellaneous::write_array_to_file(FILENAME_TOTAL_KEYWORDS_FILES, gcsDataStructureFilepath, total_keywords_files, 2);
     printf("OK!\n");
+
+    return 0;
 }
 
 /**
@@ -223,6 +225,8 @@ int Client_DSSE::loadState()
 
 #endif
     ready = true;
+
+    return 0;
 }
 
 /**
@@ -427,6 +431,7 @@ int Client_DSSE::sendCommandOnly(int cmd)
     unsigned char buffer_in[SOCKET_BUFFER_SIZE];
     socket.recv(buffer_in, SOCKET_BUFFER_SIZE, 0);
     socket.disconnect(PEER_ADDRESS);
+    return 0;
 }
 
 /**
@@ -502,7 +507,6 @@ int Client_DSSE::searchKeyword(string keyword, TYPE_COUNTER& res)
     auto start = time_now;
     auto end = time_now;
 
-    int len;
     unsigned char buffer_in[SOCKET_BUFFER_SIZE] = {'\0'};
     unsigned char buffer_out[SOCKET_BUFFER_SIZE] = {'\0'};
     zmq::context_t context(1);

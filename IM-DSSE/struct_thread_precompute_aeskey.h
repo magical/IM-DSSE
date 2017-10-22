@@ -2,7 +2,7 @@
 #define STRUCT_THREAD_PRECOMPUTE_AESKEY_H
 #include "MasterKey.h"
 #include "config.h"
-typedef struct THREAD_PRECOMPUTE_AESKEY
+struct THREAD_PRECOMPUTE_AESKEY
 {
     unsigned char* aes_keys;
     TYPE_INDEX idx;
