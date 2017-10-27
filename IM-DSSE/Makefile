@@ -35,13 +35,13 @@ PreprocessOnlySwitch   :=-E
 ObjectsFileList        :="IM-DSSE.txt"
 PCHCompileFlags        :=
 MakeDirCommand         :=mkdir -p
-LinkOptions            :=  -lzmq -lpthread -ltomcrypt -lintel_aes64 
-IncludePath            :=  $(IncludeSwitch). 
+LinkOptions            :=  -lzmq -lpthread -ltomcrypt
+IncludePath            :=  -I. -I../sparsehash-2.0.3/src -I../libtomcrypt-1.18.0-rc5/src/headers -I../zeromq-4.2.2/include
 IncludePCH             := 
 RcIncludePath          := 
 Libs                   := 
 ArLibs                 :=  
-LibPath                := $(LibraryPathSwitch). 
+LibPath                :=  -L. -L../libtomcrypt-1.18.0-rc5 -L../zeromq-4.2.2/src/.libs
 
 ##
 ## Common variables

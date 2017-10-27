@@ -2,7 +2,7 @@
 #ifndef DSSE_PARAM_H
 #define DSSE_PARAM_H
 
-#define INTEL_AES_NI // Intel AES-NI library
+//#define INTEL_AES_NI // Intel AES-NI library
 
 #define VARIANT_III       // 4 options: VARIANT_MAIN, VARIANT_I, VARIANT_II, VARIANT_III
 #define DISK_STORAGE_MODE // Enable to store Encrypted index on HDD (RAM if disabled)
@@ -15,8 +15,8 @@
 
 #define BLOCK_STATE_PIECE_COL_SIZE (NUM_BLOCKS / BYTE_SIZE) // 20       // in byte
 
-#define MATRIX_PIECE_COL_SIZE \
-    128 // in byte, set this to split into submatrices in case the whole encrypted index is too large
+// set this to split into submatrices in case the whole encrypted index is too large
+#define MATRIX_PIECE_COL_SIZE 128 // in bytes
 
 #include "DSSE_Hashmap_Key_Class.h"
 #include <stdio.h>
@@ -65,12 +65,12 @@ const std::string seed = "12345678"; // random seed
 
 #endif
 
-static const string gcsDataStructureFilepath = "../data/state/";
-static const string gcsMatrixPiecePath = "../data/EIDX/";
+static const string gcsDataStructureFilepath = "./data/state/";
+static const string gcsMatrixPiecePath = "./data/EIDX/";
 
-static const string gcsFilepath = "../data/DB/"; // path of input database
+static const string gcsFilepath = "./data/DB/"; // path of input database
 
-static const string gcsUpdateFilepath = "../data/Update/"; // Path of updated file
+static const string gcsUpdateFilepath = "./data/Update/"; // Path of updated file
 
 #define MATRIX_PIECE_ROW_SIZE MATRIX_ROW_SIZE // in bit
 #define BLOCK_STATE_PIECE_ROW_SIZE MATRIX_PIECE_ROW_SIZE
